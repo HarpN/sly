@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sly.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "sly.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app: sly-psn-sync
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sly.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: sly-psn-sync
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sly.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: sly-psn-sync
+    spec:
+      serviceAccountName: {{ include "sly.fullname" . }}
+      containers:
+        - name: sly
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: SERVICE_NAME
+              value: {{ .Values.env.SERVICE_NAME | quote }}
+            - name: SERVICE_VERSION
+              value: {{ .Values.env.SERVICE_VERSION | quote }}
+            - name: GRPC_PORT
+              value: {{ .Values.env.GRPC_PORT | quote }}
+            - name: JUDY_GRPC_TARGET
+              value: {{ .Values.env.JUDY_GRPC_TARGET | quote }}
+            - name: JUDY_TIMEOUT_SECONDS
+              value: {{ .Values.env.JUDY_TIMEOUT_SECONDS | quote }}
+            - name: OUTBOUND_SIGNATURE_HEADER
+              value: {{ .Values.env.OUTBOUND_SIGNATURE_HEADER | quote }}
+            - name: OUTBOUND_KEY_ID
+              value: {{ .Values.env.OUTBOUND_KEY_ID | quote }}
+            - name: PSN_ACCOUNT_ID
+              value: {{ .Values.env.PSN_ACCOUNT_ID | quote }}
+            - name: PSN_REGION
+              value: {{ .Values.env.PSN_REGION | quote }}
+            - name: OUTBOUND_SIGNATURE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sly.fullname" . }}-secrets
+                  key: OUTBOUND_SIGNATURE_SECRET
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

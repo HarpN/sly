@@ -1,0 +1,18 @@
+services:
+  sly:
+    build: .
+    container_name: sly_psn_sync
+    ports:
+      - "50055:50055"
+    environment:
+      - SERVICE_NAME=sly-psn-sync
+      - SERVICE_VERSION=0.1.0
+      - GRPC_PORT=50055
+      - JUDY_GRPC_TARGET=host.docker.internal:50052
+      - JUDY_TIMEOUT_SECONDS=10
+      - OUTBOUND_SIGNATURE_HEADER=X-Sly-Signature
+      - OUTBOUND_SIGNATURE_SECRET=sly-dev-secret
+      - OUTBOUND_KEY_ID=sly-k1
+      - PSN_ACCOUNT_ID=demo-account
+      - PSN_REGION=us
+    restart: unless-stopped

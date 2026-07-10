@@ -1,0 +1,37 @@
+replicaCount: 1
+
+image:
+  repository: sly-psn-sync
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 50055
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi
+
+env:
+  SERVICE_NAME: sly-psn-sync
+  SERVICE_VERSION: 0.1.0
+  GRPC_PORT: "50055"
+  JUDY_GRPC_TARGET: judy-council.governance-zone.svc.cluster.local:50052
+  JUDY_TIMEOUT_SECONDS: "10"
+  OUTBOUND_SIGNATURE_HEADER: X-Sly-Signature
+  OUTBOUND_KEY_ID: sly-k1
+  PSN_ACCOUNT_ID: demo-account
+  PSN_REGION: us
+
+secretEnv:
+  OUTBOUND_SIGNATURE_SECRET: sly-dev-secret
+
+networkPolicy:
+  enabled: true
+  governanceNamespace: governance-zone
+  governancePodLabel: judy-council

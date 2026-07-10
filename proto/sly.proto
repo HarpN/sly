@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sly;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+
+service SlyService {
+  rpc Health(google.protobuf.Empty) returns (google.protobuf.Struct);
+  rpc SyncPSN(google.protobuf.Struct) returns (google.protobuf.Struct);
+}

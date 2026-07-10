@@ -1,2 +1,68 @@
-# sly
-Sly is the PSN telemetry ingestion container for the Trophy Backlog Command Center. Named after PlayStation’s master thief, it safely fetches raw account data and forwards standardized JSON payloads straight to the Judy Council.
+# Sly
+
+Sly is the PSN telemetry synchronization agent. It runs as a gRPC service, collects PSN profile state, packages it into a signed proposal, and forwards the proposal to Judy for governance review or commit.
+
+## Architecture
+
+Sly follows the same contract-first pattern as the other agents in this stack.
+
+- `agent-zone`: Sly receives sync requests and builds PSN telemetry proposals.
+- `governance-zone`: Judy receives signed proposals from Sly for review or commit.
+- `transport`: gRPC with protobuf `Struct` payloads for portable cross-service contracts.
+- `integrity`: HMAC-SHA256 signatures protect outbound requests.
+- `runtime`: Python 3.12 on a slim container image.
+
+## Service Flow
+
+1. A client calls `SyncPSN` with an account and region.
+2. Sly fetches or synthesizes PSN telemetry.
+3. Sly builds a proposal envelope and signs it.
+4. Sly sends the proposal to Judy over gRPC.
+5. Judy returns the review or commit response.
+
+## Environment
+
+- `GRPC_PORT`: inbound gRPC port, default `50055`
+- `JUDY_GRPC_TARGET`: Judy gRPC endpoint
+- `OUTBOUND_SIGNATURE_SECRET`: HMAC secret used for outbound payload signing
+- `OUTBOUND_SIGNATURE_HEADER`: metadata header used to carry the signature
+- `PSN_ACCOUNT_ID`: default PSN account identifier
+- `PSN_REGION`: default PSN region
+
+## Local Run
+
+```bash
+python -m app.main
+```
+
+## Docker
+
+```bash
+docker build -t sly-psn-sync .
+docker run --rm -p 50055:50055 sly-psn-sync
+```
+
+## Compose
+
+```bash
+docker compose up --build
+```
+
+## Tests
+
+```bash
+pytest
+```
+
+## Helm
+
+The Helm chart lives under `charts/sly` and deploys:
+
+- a gRPC `Service`
+- a `Deployment` with liveness/readiness TCP probes
+- a `Secret` for the outbound signing key
+- an egress `NetworkPolicy` that only allows traffic to Judy
+
+## Notes
+
+The PSN telemetry store is intentionally separate from the guide scraper that will be implemented in Milo. The two agents have different data shapes, retention needs, and sync cadences, so they should not share a database.
