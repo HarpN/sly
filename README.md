@@ -54,6 +54,20 @@ docker compose up --build
 pytest
 ```
 
+## Validation And Conventions
+
+- Local validation passes with `pytest` using the workspace venv Python interpreter.
+- gRPC tests use an ephemeral bind port so they remain stable across machines.
+- Sly keeps PSN telemetry separate from Milo's guide scraping store.
+- Sly follows the same contract-first, signed-request template as the other agent repos.
+
+## Updating This Repo
+
+1. Keep changes scoped to the PSN telemetry boundary; do not merge Milo guide-scraping concerns into Sly.
+2. Update the service contract, tests, and README together when behavior changes.
+3. Re-run `pytest` after each implementation pass and confirm `git diff --check` stays clean.
+4. Preserve the PSN telemetry flow and the Judy gRPC signing flow when extending the service.
+
 ## Helm
 
 The Helm chart lives under `charts/sly` and deploys:
