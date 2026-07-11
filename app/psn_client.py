@@ -13,7 +13,7 @@ class PsnClient:
         recently_played = ["Astro Bot", "Helldivers 2", "Gran Turismo 7"]
         trophies_total = 125
         trophies_earned = 92
-        completion = int(trophies_earned / trophies_total * 100)
+        completion = int(trophies_earned / trophies_total * 100) if trophies_total > 0 else 0
 
         return SyncTelemetry(
             account_id=request.account_id,

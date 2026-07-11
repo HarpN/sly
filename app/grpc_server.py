@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent import futures
 from datetime import datetime, timezone
+from threading import Lock
 from typing import Any
 from uuid import uuid4
 
@@ -19,6 +20,7 @@ metrics: dict[str, int] = {
     "judge_only_total": 0,
     "commit_total": 0,
 }
+_metrics_lock = Lock()
 
 psn_client = PsnClient()
 judy_client = JudyClient()
@@ -59,7 +61,8 @@ def _is_authorized(context: grpc.ServicerContext) -> bool:
 
 
 def _sync_psn(request_message: struct_pb2.Struct, context: grpc.ServicerContext) -> struct_pb2.Struct:
-    metrics["requests_total"] += 1
+    with _metrics_lock:
+        metrics["requests_total"] += 1
 
     if not _is_authorized(context):
         context.set_code(grpc.StatusCode.UNAUTHENTICATED)
@@ -96,11 +99,12 @@ def _sync_psn(request_message: struct_pb2.Struct, context: grpc.ServicerContext)
 
     judy_response = judy_client.send_sync(proposal, commit=request.commit)
 
-    metrics["synced_total"] += 1
-    if request.commit:
-        metrics["commit_total"] += 1
-    else:
-        metrics["judge_only_total"] += 1
+    with _metrics_lock:
+        metrics["synced_total"] += 1
+        if request.commit:
+            metrics["commit_total"] += 1
+        else:
+            metrics["judge_only_total"] += 1
 
     return _dict_to_struct(
         {

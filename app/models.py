@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 
 
 class SyncRequest(BaseModel):
-    account_id: str = Field(default="demo-account", min_length=1)
-    region: str = Field(default="us", min_length=1)
+    account_id: str = Field(default="demo-account", min_length=1, max_length=128)
+    region: str = Field(default="us", min_length=1, max_length=32)
     commit: bool = Field(default=False)
 
 
