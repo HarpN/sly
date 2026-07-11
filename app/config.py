@@ -38,6 +38,9 @@ class Settings:
 
     source_account_id: str = os.getenv("PSN_ACCOUNT_ID", "demo-account")
     source_region: str = os.getenv("PSN_REGION", "us")
+    keeper_db_path: str = os.getenv("KEEPER_DB_PATH", "../TheKeeper/keeper_blended.db")
+    keeper_export_enabled: bool = os.getenv("KEEPER_EXPORT_ENABLED", "true").lower() == "true"
+    psn_platform: str = os.getenv("PSN_PLATFORM", "PS5")
 
 
 settings = Settings()

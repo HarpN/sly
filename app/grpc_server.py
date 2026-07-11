@@ -10,6 +10,7 @@ import grpc
 from google.protobuf import empty_pb2, json_format, struct_pb2
 
 from .config import settings
+from .keeper_export import export_telemetry
 from .judy_client import JudyClient
 from .models import JudyProposal, SyncRequest
 from .psn_client import PsnClient
@@ -77,6 +78,7 @@ def _sync_psn(request_message: struct_pb2.Struct, context: grpc.ServicerContext)
         return struct_pb2.Struct()
 
     telemetry = psn_client.fetch_telemetry(request)
+    export_telemetry(telemetry)
     proposal = JudyProposal(
         transaction_metadata={
             "agent_id": settings.service_name,

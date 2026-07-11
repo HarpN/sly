@@ -10,6 +10,7 @@ from google.protobuf import empty_pb2, json_format, struct_pb2
 os.environ["JUDY_GRPC_TARGET"] = "127.0.0.1:50066"
 os.environ["OUTBOUND_SIGNATURE_SECRET"] = "sly-dev-secret"
 os.environ["INBOUND_AUTH_TOKEN"] = "test-sly-auth-token"
+os.environ["KEEPER_EXPORT_ENABLED"] = "false"
 
 from app.grpc_server import create_server, judy_client, psn_client
 from app.models import SyncTelemetry
