@@ -10,9 +10,15 @@ services:
       - GRPC_PORT=50055
       - JUDY_GRPC_TARGET=host.docker.internal:50052
       - JUDY_TIMEOUT_SECONDS=10
+      - JUDY_TLS_ENABLED=false
+      - JUDY_MTLS_ENABLED=false
       - OUTBOUND_SIGNATURE_HEADER=X-Sly-Signature
       - OUTBOUND_SIGNATURE_SECRET=sly-dev-secret
       - OUTBOUND_KEY_ID=sly-k1
+      - REPLAY_TTL_SECONDS=300
+      - INBOUND_AUTH_ENABLED=true
+      - INBOUND_AUTH_HEADER=x-sly-auth
+      - INBOUND_AUTH_TOKEN=local-dev-sly-token
       - PSN_ACCOUNT_ID=demo-account
       - PSN_REGION=us
     restart: unless-stopped
