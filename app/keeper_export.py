@@ -39,6 +39,61 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
     )
 
 
+def _promote_snapshots(
+    connection: sqlite3.Connection,
+    *,
+    entity_type: str,
+    entity_key: str,
+    latest_payload_json: str,
+    created_at: str,
+) -> None:
+    current_latest = connection.execute(
+        """
+        SELECT payload_json, created_at
+        FROM keeper_snapshots
+        WHERE entity_type = ? AND entity_key = ? AND version_label = 'LATEST'
+        """,
+        (entity_type, entity_key),
+    ).fetchone()
+
+    if current_latest is not None and str(current_latest["payload_json"]) != latest_payload_json:
+        connection.execute(
+            """
+            INSERT OR REPLACE INTO keeper_snapshots (
+                entity_type, entity_key, version_label, payload_json, created_at
+            ) VALUES (?, ?, 'PREVIOUS', ?, ?)
+            """,
+            (entity_type, entity_key, str(current_latest["payload_json"]), str(current_latest["created_at"])),
+        )
+
+        has_stable = connection.execute(
+            """
+            SELECT 1
+            FROM keeper_snapshots
+            WHERE entity_type = ? AND entity_key = ? AND version_label = 'STABLE'
+            """,
+            (entity_type, entity_key),
+        ).fetchone()
+        if has_stable is None:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO keeper_snapshots (
+                    entity_type, entity_key, version_label, payload_json, created_at
+                ) VALUES (?, ?, 'STABLE', ?, ?)
+                """,
+                (entity_type, entity_key, str(current_latest["payload_json"]), str(current_latest["created_at"])),
+            )
+
+    connection.execute(
+        """
+        INSERT OR REPLACE INTO keeper_snapshots (
+            entity_type, entity_key, version_label, payload_json, created_at
+        ) VALUES (?, ?, 'LATEST', ?, ?)
+        """,
+        (entity_type, entity_key, latest_payload_json, created_at),
+    )
+
+
 def export_telemetry(telemetry: SyncTelemetry) -> None:
     if not settings.keeper_export_enabled:
         return
@@ -74,16 +129,10 @@ def export_telemetry(telemetry: SyncTelemetry) -> None:
                 "trophy_count": int(telemetry.trophies_total),
                 "correlation_id": telemetry.correlation_id,
             }
-            connection.execute(
-                """
-                INSERT OR REPLACE INTO keeper_snapshots (
-                    entity_type, entity_key, version_label, payload_json, created_at
-                ) VALUES (?, ?, 'LATEST', ?, ?)
-                """,
-                (
-                    "game",
-                    entity_key,
-                    json.dumps(latest_payload, separators=(",", ":")),
-                    telemetry.fetched_at,
-                ),
+            _promote_snapshots(
+                connection,
+                entity_type="game",
+                entity_key=entity_key,
+                latest_payload_json=json.dumps(latest_payload, separators=(",", ":")),
+                created_at=telemetry.fetched_at,
             )
