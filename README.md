@@ -126,3 +126,15 @@ The Helm chart lives under `charts/sly` and deploys:
 ## Notes
 
 The PSN telemetry store is intentionally separate from the guide scraper that will be implemented in Milo. The two agents have different data shapes, retention needs, and sync cadences, so they should not share a database.
+
+## Changelog
+
+### v0.2.0 - 2026-07-14
+
+Added:
+
+- Alignment notes with the broader security hardening posture across agent services (auth metadata, signatures, replay protection, mTLS-ready runtime).
+
+Changed:
+
+- Clarified boundary position: Sly remains telemetry-focused while guide ingestion/moderation controls are isolated to Milo.
